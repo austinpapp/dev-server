@@ -18,3 +18,6 @@ The `targets/ssh` folder holds the private key needed to connect to the remote i
 In order for ansible to connect to your instance (not mine), you'll need to update your ip or fqdn in `invenotry/all` file.
 You use update `ansible_ssh_host=<your_ip>` in that file.
 
+## Code Deployment
+However you want to deploy your code is up to you. We use teamcity at Powerline. Your symfony code will need to be push to the dev server some how into the `/{{ project }}/backend` location by default. If you have called your project `jerk` then you need to put symfony code into `/jerk/backend`.
+
