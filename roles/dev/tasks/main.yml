@@ -1,0 +1,98 @@
+- name: update apt
+  tags: setup
+  apt: update_cache=yes
+
+- name: install python modules for ansible
+  tags: setup
+  apt: pkg=python-pycurl state=latest
+
+- name: install curl
+  tags: setup
+  apt: pkg=curl state=latest
+
+- name: install project dependencies
+  tags: setup
+  apt: pkg={{ item }} state=latest
+  with_items:
+    - vim
+    - git
+    - nginx
+    - php5
+    - php5-common
+    - php5-fpm
+    - php5-cli
+    - php5-curl
+    - php5-gd
+    - php5-mysql
+    - php5-sqlite
+    - php5-intl
+    - supervisor
+    - rabbitmq-server
+    - mysql-server
+
+- name: fpm | configure pool
+  tags: config
+  template: src=fpm.j2 dest="/etc/php5/fpm/pool.d/{{ project }}.conf"
+
+- name: Create dev dir for nginx
+  tags: config
+  file: path=/austindev state=directory
+
+- name: nginx | setup vhost
+  tags: config
+  template: src=vhost.j2 dest="/etc/nginx/sites-available/{{ project }}"
+
+- name: nginx | enable vhost
+  tags: config
+  file: src="/etc/nginx/sites-available/{{ project }}" path="/etc/nginx/sites-enabled/{{ project }}"   state=link
+
+- name: nginx | restart
+  tags: config
+  service: name=nginx state=restarted
+
+- name: nginx | delete default
+  file: path="/etc/nginx/sites-enabled/default" state=absent
+  tags: config
+
+- name: nginx | copy server crt
+  copy: src=server.crt dest=/srv/server.crt
+  tags: config
+
+- name: nginx | copy server key
+  copy: src=server.key dest=/srv/server.key
+  tags: config
+
+- name: fpm | restart
+  tags: config
+  service: name=php5-fpm state=restarted
+
+- name: rabbitmq | configure vhost
+  tags: config
+  rabbitmq_vhost: name={{ project }} state=present
+
+- name: rabbitmq | configure user
+  tags: config
+  rabbitmq_user: user={{ project }}
+                 password={{ project }}
+                 vhost={{ project }}
+                 configure_priv=.*
+                 read_priv=.*
+                 write_priv=.*
+                 state=present
+
+- name: composer | install
+  tags: setup
+  shell: >
+    curl -sS https://getcomposer.org/installer | php;
+
+- name: composer | path fix 
+  tags: setup
+  shell: mv composer.phar /usr/local/bin/composer;
+
+- name: ssh | setup known_hosts
+  tags: config
+  copy: src=known_hosts dest=/etc/ssh/ssh_known_hosts
+
+- name: nginx | restart 
+  tags: config
+  service: name=nginx state=restarted

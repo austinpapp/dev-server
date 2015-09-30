@@ -1,0 +1,18 @@
+---
+- hosts: dev
+  vars:
+    update_apt_cache: false
+    server_name: "admin.austindev api.austindev"
+    web_server_name: "54.165.253.255"
+    cert_path: targets/certs
+    cert_file: dev.pem
+    parameters_file: targets/config/parameters.yml
+    config_js_file: targets/config/config.js
+  roles:
+    - setup
+    - configure
+    - deploy
+  pre_tasks:
+      - name: update apt if needed
+        apt: update_cache=yes
+        when: update_apt_cache

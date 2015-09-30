@@ -1,0 +1,6 @@
+---
+- hosts: dev
+  vars:
+      server_name: admin.dev api.dev 54.209.58.147
+  roles:
+    - dev
