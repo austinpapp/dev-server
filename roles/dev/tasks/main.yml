@@ -2,6 +2,22 @@
   tags: setup
   apt: update_cache=yes
 
+- name: add project user
+  tags: configure
+  user: name={{ project }} comment="{{ project }}" home="/srv/{{ project }}"
+
+- name: create log directory
+  tags: config
+  action: file path=/srv/log state=directory
+
+- name: create config directory
+  tags: config
+  action: file path=/srv/config state=directory
+
+- name: create certs directory
+  tags: config
+  action: file path=/srv/certs state=directory
+
 - name: install python modules for ansible
   tags: setup
   apt: pkg=python-pycurl state=latest
@@ -36,7 +52,7 @@
 
 - name: Create dev dir for nginx
   tags: config
-  file: path=/austindev state=directory
+  file: path=/{{ project }} state=directory
 
 - name: nginx | setup vhost
   tags: config
@@ -55,11 +71,11 @@
   tags: config
 
 - name: nginx | copy server crt
-  copy: src=server.crt dest=/srv/server.crt
+  copy: src=server.crt dest=/backend/server.crt
   tags: config
 
 - name: nginx | copy server key
-  copy: src=server.key dest=/srv/server.key
+  copy: src=server.key dest=/backend/server.key
   tags: config
 
 - name: fpm | restart
@@ -79,6 +95,12 @@
                  read_priv=.*
                  write_priv=.*
                  state=present
+
+- name: configure push queue daemon (supervisor)
+  tags: 
+      - config
+      - supervisor
+  template: src=supervisor_push_queue.j2 dest="/etc/supervisor/conf.d/{{ project }}-push-queue.conf"
 
 - name: composer | install
   tags: setup
